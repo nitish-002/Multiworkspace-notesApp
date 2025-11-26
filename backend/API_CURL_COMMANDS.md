@@ -349,6 +349,7 @@ curl -X PUT http://127.0.0.1:8000/api/workspaces/1/ ^
   -d "{\"name\": \"Updated Workspace Name\", \"description\": \"Updated description\"}"
 ```
 
+
 ---
 
 ## 13. Delete Workspace
@@ -404,5 +405,102 @@ curl -X PUT http://127.0.0.1:8000/api/workspaces/1/members/2/update/ ^
 
 ```bash
 curl -X DELETE http://127.0.0.1:8000/api/workspaces/1/members/2/remove/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+---
+
+# Notebooks API
+
+## 18. List Notebooks
+
+```bash
+curl -X GET http://127.0.0.1:8000/api/notebooks/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+**Filter by Workspace:**
+```bash
+curl -X GET "http://127.0.0.1:8000/api/notebooks/?workspace_id=1" ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+---
+
+## 19. Create Notebook
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/notebooks/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"title\": \"Project Ideas\", \"content\": \"# My Ideas\n\n1. Idea one...\", \"workspace_id\": 1}"
+```
+
+**Expected Response:**
+```json
+{
+    "id": 1,
+    "title": "Project Ideas",
+    "content": "# My Ideas\n\n1. Idea one...",
+    "version": 1,
+    ...
+}
+```
+
+---
+
+## 20. Get Notebook Detail
+
+```bash
+curl -X GET http://127.0.0.1:8000/api/notebooks/1/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+---
+
+## 21. Update Notebook
+
+```bash
+curl -X PUT http://127.0.0.1:8000/api/notebooks/1/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"title\": \"Project Ideas (Updated)\", \"content\": \"# My Ideas\n\n1. Idea one...\n2. Idea two\", \"change_summary\": \"Added idea two\"}"
+```
+
+**Note:** This automatically creates a new version.
+
+---
+
+## 22. Soft Delete Notebook (Trash)
+
+```bash
+curl -X DELETE http://127.0.0.1:8000/api/notebooks/1/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+---
+
+## 23. List Notebook Versions
+
+```bash
+curl -X GET http://127.0.0.1:8000/api/notebooks/1/versions/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+---
+
+## 24. List Trash (Deleted Notebooks)
+
+```bash
+curl -X GET http://127.0.0.1:8000/api/notebooks/trash/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+---
+
+## 25. Restore Notebook from Trash
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/notebooks/1/restore/ ^
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
 ```

@@ -47,8 +47,7 @@ class WorkspaceDetailSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'slug', 'description', 'owner', 'created_at', 'updated_at', 'members', 'notebook_count']
 
     def get_notebook_count(self, obj):
-        # Placeholder until notebooks app is created
-        return 0
+        return obj.notebooks.filter(is_deleted=False).count()
 
 class WorkspaceCreateSerializer(serializers.ModelSerializer):
     class Meta:
