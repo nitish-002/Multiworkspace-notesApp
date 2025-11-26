@@ -260,103 +260,149 @@ curl -X POST http://127.0.0.1:8000/api/auth/logout/ ^
 
 ---
 
-## Testing with PowerShell (Alternative)
+# Workspaces API
 
-If you prefer PowerShell's `Invoke-RestMethod`:
+## 9. List Workspaces
 
-### Register
-```powershell
-$body = @{
-    username = "johndoe"
-    email = "john@example.com"
-    password = "SecurePass123!"
-    password2 = "SecurePass123!"
-    first_name = "John"
-    last_name = "Doe"
-} | ConvertTo-Json
-
-Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/auth/register/" -Method Post -Body $body -ContentType "application/json"
+```bash
+curl -X GET http://127.0.0.1:8000/api/workspaces/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
 ```
 
-### Login
-```powershell
-$body = @{
-    email = "john@example.com"
-    password = "SecurePass123!"
-} | ConvertTo-Json
-
-$response = Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/auth/login/" -Method Post -Body $body -ContentType "application/json"
-$accessToken = $response.access
-$refreshToken = $response.refresh
-```
-
-### Get Profile
-```powershell
-$headers = @{
-    Authorization = "Bearer $accessToken"
-}
-
-Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/auth/profile/" -Method Get -Headers $headers
-```
-
-### Update Profile
-```powershell
-$headers = @{
-    Authorization = "Bearer $accessToken"
-}
-
-$body = @{
-    first_name = "Jane"
-    last_name = "Smith"
-} | ConvertTo-Json
-
-Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/auth/profile/" -Method Patch -Headers $headers -Body $body -ContentType "application/json"
-```
-
-### Change Password
-```powershell
-$headers = @{
-    Authorization = "Bearer $accessToken"
-}
-
-$body = @{
-    old_password = "SecurePass123!"
-    new_password = "NewSecurePass456!"
-} | ConvertTo-Json
-
-Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/auth/change-password/" -Method Post -Headers $headers -Body $body -ContentType "application/json"
-```
-
-### Logout
-```powershell
-$headers = @{
-    Authorization = "Bearer $accessToken"
-}
-
-$body = @{
-    refresh = $refreshToken
-} | ConvertTo-Json
-
-Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/auth/logout/" -Method Post -Headers $headers -Body $body -ContentType "application/json"
+**Expected Response:**
+```json
+[
+    {
+        "id": 1,
+        "name": "My Workspace",
+        "slug": "my-workspace",
+        "owner": "johndoe",
+        "member_count": 1,
+        "my_role": "OWNER"
+    }
+]
 ```
 
 ---
 
-## Tips
+## 10. Create Workspace
 
-1. **Windows Command Prompt**: Use `^` for line continuation
-2. **PowerShell/Bash**: Use backtick `` ` `` (PowerShell) or `\` (Bash) for line continuation
-3. **Save Tokens**: After login/register, copy and save the access and refresh tokens
-4. **Token Expiry**: Access tokens expire after 1 hour, use refresh endpoint to get new ones
-5. **Pretty Print**: Add `-w "\n"` to cURL commands or use `| jq` for formatted JSON output
+```bash
+curl -X POST http://127.0.0.1:8000/api/workspaces/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"name\": \"New Team Space\", \"description\": \"A space for the new team\"}"
+```
+
+**Expected Response:**
+```json
+{
+    "name": "New Team Space",
+    "description": "A space for the new team"
+}
+```
 
 ---
 
-## Common HTTP Status Codes
+## 11. Get Workspace Detail
 
-- **200 OK**: Successful GET, PATCH, or general success
-- **201 Created**: Successful registration
-- **400 Bad Request**: Validation errors or wrong password
-- **401 Unauthorized**: Missing or invalid token
-- **404 Not Found**: Endpoint doesn't exist
-- **500 Internal Server Error**: Server-side error
+```bash
+curl -X GET http://127.0.0.1:8000/api/workspaces/1/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+**Expected Response:**
+```json
+{
+    "id": 1,
+    "name": "My Workspace",
+    "slug": "my-workspace",
+    "description": "",
+    "owner": {
+        "id": 1,
+        "username": "johndoe",
+        "email": "john@example.com",
+        ...
+    },
+    "created_at": "...",
+    "updated_at": "...",
+    "members": [
+        {
+            "id": 1,
+            "user": { ... },
+            "role": "OWNER",
+            "joined_at": "..."
+        }
+    ],
+    "notebook_count": 0
+}
+```
+
+---
+
+## 12. Update Workspace
+
+```bash
+curl -X PUT http://127.0.0.1:8000/api/workspaces/1/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"name\": \"Updated Workspace Name\", \"description\": \"Updated description\"}"
+```
+
+---
+
+## 13. Delete Workspace
+
+```bash
+curl -X DELETE http://127.0.0.1:8000/api/workspaces/1/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+---
+
+## 14. List Workspace Members
+
+```bash
+curl -X GET http://127.0.0.1:8000/api/workspaces/1/members/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+---
+
+## 15. Add Workspace Member
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/workspaces/1/members/add/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"email\": \"jane@example.com\", \"role\": \"EDITOR\"}"
+```
+
+**Expected Response:**
+```json
+{
+    "detail": "Member added successfully."
+}
+```
+
+---
+
+## 16. Update Member Role
+
+```bash
+curl -X PUT http://127.0.0.1:8000/api/workspaces/1/members/2/update/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"role\": \"ADMIN\"}"
+```
+
+**Note:** Replace `2` with the actual user ID of the member.
+
+---
+
+## 17. Remove Member
+
+```bash
+curl -X DELETE http://127.0.0.1:8000/api/workspaces/1/members/2/remove/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
