@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'apps.accounts',
     'apps.workspaces',
     'apps.notebooks',
+    'apps.labels',
+    'apps.search',
 ]
 
 MIDDLEWARE = [

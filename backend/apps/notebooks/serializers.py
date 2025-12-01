@@ -9,10 +9,11 @@ class NotebookListSerializer(serializers.ModelSerializer):
     workspace = serializers.SerializerMethodField()
     created_by = serializers.StringRelatedField()
     last_modified_by = serializers.StringRelatedField()
+    labels = serializers.SerializerMethodField()
 
     class Meta:
         model = Notebook
-        fields = ['id', 'title', 'workspace', 'version', 'created_by', 'last_modified_by', 'updated_at', 'is_deleted']
+        fields = ['id', 'title', 'workspace', 'version', 'created_by', 'last_modified_by', 'updated_at', 'is_deleted', 'labels']
 
     def get_workspace(self, obj):
         return {
@@ -20,14 +21,21 @@ class NotebookListSerializer(serializers.ModelSerializer):
             "name": obj.workspace.name
         }
 
+    def get_labels(self, obj):
+        return [{"id": nl.label.id, "name": nl.label.name, "color": nl.label.color} for nl in obj.notebook_labels.all()]
+
 class NotebookDetailSerializer(serializers.ModelSerializer):
     created_by = serializers.StringRelatedField()
     last_modified_by = serializers.StringRelatedField()
+    labels = serializers.SerializerMethodField()
 
     class Meta:
         model = Notebook
-        fields = ['id', 'workspace', 'title', 'content', 'version', 'content_hash', 'created_by', 'last_modified_by', 'created_at', 'updated_at', 'is_deleted']
+        fields = ['id', 'workspace', 'title', 'content', 'version', 'content_hash', 'created_by', 'last_modified_by', 'created_at', 'updated_at', 'is_deleted', 'labels']
         read_only_fields = ['workspace', 'version', 'content_hash', 'created_by', 'last_modified_by', 'created_at', 'updated_at']
+
+    def get_labels(self, obj):
+        return [{"id": nl.label.id, "name": nl.label.name, "color": nl.label.color} for nl in obj.notebook_labels.all()]
 
 class NotebookCreateSerializer(serializers.ModelSerializer):
     workspace_id = serializers.IntegerField(write_only=True)

@@ -11,6 +11,8 @@ urlpatterns = [
     path('api/auth/', include('apps.accounts.urls')),
     path('api/workspaces/', include('apps.workspaces.urls')),
     path('api/notebooks/', include('apps.notebooks.urls')),
+    path('api/labels/', include('apps.labels.urls')),
+    path('api/search/', include('apps.search.urls')),
 ]
 
 # Serve static and media files in development

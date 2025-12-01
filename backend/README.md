@@ -13,7 +13,11 @@ backend/
 │   ├── urls.py            # Root URL configuration
 │   └── wsgi.py
 ├── apps/
-│   └── accounts/          # Authentication app
+│   ├── accounts/          # Authentication app
+│   ├── workspaces/        # Workspaces management
+│   ├── notebooks/         # Notebooks and versioning
+│   ├── labels/            # Labeling system
+│   └── search/            # Full-text search
 │       ├── __init__.py
 │       ├── admin.py       # Django admin configuration
 │       ├── apps.py        # App configuration
@@ -38,6 +42,10 @@ backend/
 - **User Registration**: Create new accounts with password validation
 - **User Profile**: Retrieve and update user information
 - **Password Management**: Change password with old password verification
+- **Workspaces**: Multi-tenant workspace management with role-based access (Owner, Admin, Editor, Viewer)
+- **Notebooks**: Version-controlled notebooks with soft delete and restore functionality
+- **Labels**: Tagging system for notebooks with color-coded labels
+- **Search**: Full-text search across notebooks and workspaces with filtering
 - **CORS Support**: Cross-origin requests enabled for frontend integration
 - **Django Admin**: Custom admin interface for user management
 

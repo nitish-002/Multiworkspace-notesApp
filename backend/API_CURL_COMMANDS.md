@@ -504,3 +504,129 @@ curl -X GET http://127.0.0.1:8000/api/notebooks/trash/ ^
 curl -X POST http://127.0.0.1:8000/api/notebooks/1/restore/ ^
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
 ```
+
+---
+
+# Labels API
+
+## 26. List Labels
+
+```bash
+curl -X GET http://127.0.0.1:8000/api/labels/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+**Filter by Workspace:**
+```bash
+curl -X GET "http://127.0.0.1:8000/api/labels/?workspace_id=1" ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+---
+
+## 27. Create Label
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/labels/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"name\": \"Urgent\", \"color\": \"#EF4444\", \"workspace\": 1}"
+```
+
+**Expected Response:**
+```json
+{
+    "id": 1,
+    "name": "Urgent",
+    "color": "#EF4444",
+    "description": "",
+    "workspace": 1,
+    "notebook_count": 0,
+    ...
+}
+```
+
+---
+
+## 28. Get Label Detail
+
+```bash
+curl -X GET http://127.0.0.1:8000/api/labels/1/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+---
+
+## 29. Update Label
+
+```bash
+curl -X PATCH http://127.0.0.1:8000/api/labels/1/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"name\": \"High Priority\", \"color\": \"#DC2626\"}"
+```
+
+---
+
+## 30. Delete Label
+
+```bash
+curl -X DELETE http://127.0.0.1:8000/api/labels/1/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+---
+
+## 31. Add Label to Notebook
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/labels/notebooks/1/labels/add/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"label_id\": 1}"
+```
+
+---
+
+## 32. List Notebook Labels
+
+```bash
+curl -X GET http://127.0.0.1:8000/api/labels/notebooks/1/labels/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+---
+
+## 33. Remove Label from Notebook
+
+```bash
+curl -X DELETE http://127.0.0.1:8000/api/labels/notebooks/1/labels/1/remove/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+---
+
+# Search API
+
+## 34. Search Notebooks
+
+**Basic Search:**
+```bash
+curl -X GET "http://127.0.0.1:8000/api/search/notebooks/?q=meeting" ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+**Advanced Search (Workspace + Labels):**
+```bash
+curl -X GET "http://127.0.0.1:8000/api/search/notebooks/?q=project&workspace_id=1&labels=1,2" ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+---
+
+## 35. Search Workspaces
+
+```bash
+curl -X GET "http://127.0.0.1:8000/api/search/workspaces/?q=team" ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
