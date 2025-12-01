@@ -13,6 +13,13 @@ REFRESH_TOKEN="your_refresh_token_here"
 
 ---
 
+> [!NOTE]
+> The commands below use `^` for line continuation, which is standard for **Command Prompt (cmd.exe)**.
+> If you are using **PowerShell**, replace `^` with backtick `` ` `` or use single-line commands.
+> If you are using **Git Bash**, use `\` and ensure JSON is properly escaped (single quotes for body, double quotes for keys/values).
+
+---
+
 ## 1. Register a New User
 
 ```bash
