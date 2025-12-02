@@ -8,6 +8,7 @@ import './App.css';
 
 import WorkspaceDetail from './pages/WorkspaceDetail';
 import NotebookDetail from './pages/NotebookDetail';
+import SharedNotebook from './pages/SharedNotebook';
 
 // Simple protected route component
 const ProtectedRoute = ({ children }) => {
@@ -24,6 +25,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/shared/:token" element={<SharedNotebook />} />
 
         <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
           <Route path="/" element={<Home />} />

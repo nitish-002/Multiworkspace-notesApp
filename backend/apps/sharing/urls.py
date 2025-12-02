@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (
     ShareLinkListView, CreateShareLinkView, ShareLinkDetailView,
-    AccessSharedNotebookView, ShareLinkStatsView
+    AccessSharedNotebookView, ShareLinkStatsView, EditSharedNotebookView
 )
 
 urlpatterns = [
@@ -10,4 +10,5 @@ urlpatterns = [
     path('<int:pk>/', ShareLinkDetailView.as_view(), name='share-link-detail'),
     path('<int:pk>/stats/', ShareLinkStatsView.as_view(), name='share-link-stats'),
     path('access/<uuid:token>/', AccessSharedNotebookView.as_view(), name='access-shared-notebook'),
+    path('edit/<uuid:token>/', EditSharedNotebookView.as_view(), name='edit-shared-notebook'),
 ]

@@ -8,7 +8,6 @@ from apps.notebooks.models import Notebook
 class ShareLink(models.Model):
     ACCESS_LEVEL_CHOICES = [
         ('READ', 'Read Only'),
-        ('COMMENT', 'Can Comment'),
         ('EDIT', 'Can Edit'),
     ]
 

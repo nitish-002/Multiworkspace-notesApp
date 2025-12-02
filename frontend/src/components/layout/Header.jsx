@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { User, LogOut, Plus, ChevronDown, LayoutGrid } from 'lucide-react';
 import api from '../../api/axios';
+import SearchBar from '../search/SearchBar';
 
 const Header = () => {
     const navigate = useNavigate();
@@ -61,10 +62,10 @@ const Header = () => {
 
     return (
         <header className="h-14 border-b border-gray-200 bg-white px-4 flex items-center justify-between sticky top-0 z-50">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 w-1/4">
                 <Link to="/" className="font-semibold text-lg flex items-center gap-2">
                     <LayoutGrid className="w-5 h-5" />
-                    <span>NotionClone</span>
+                    <span>PaceWorks</span>
                 </Link>
 
                 <div className="relative" ref={workspacesRef}>
@@ -127,7 +128,11 @@ const Header = () => {
                 </div>
             </div>
 
-            <div className="relative" ref={profileRef}>
+            <div className="flex-1 max-w-xl px-4">
+                <SearchBar />
+            </div>
+
+            <div className="relative flex justify-end w-1/4" ref={profileRef}>
                 <button
                     onClick={() => setIsProfileOpen(!isProfileOpen)}
                     className="flex items-center gap-2 hover:bg-gray-100 px-2 py-1 rounded transition-colors"

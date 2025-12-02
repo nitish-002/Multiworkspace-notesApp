@@ -5,6 +5,7 @@ import api from '../api/axios';
 import Button from '../components/ui/Button';
 import CreateNotebookModal from '../components/workspaces/CreateNotebookModal';
 import InviteMemberModal from '../components/workspaces/InviteMemberModal';
+import LabelList from '../components/labels/LabelList';
 
 const WorkspaceDetail = () => {
     const { id } = useParams();
@@ -60,7 +61,7 @@ const WorkspaceDetail = () => {
     return (
         <div className="flex h-[calc(100vh-3.5rem)]">
             {/* Sidebar / Member List */}
-            <div className="w-64 border-r border-gray-200 bg-gray-50 p-4 flex flex-col">
+            <div className="w-64 border-r border-gray-200 bg-gray-50 p-4 flex flex-col overflow-y-auto">
                 <div className="mb-6">
                     <h2 className="text-lg font-bold text-gray-900 truncate" title={workspace.name}>
                         {workspace.name}
@@ -68,7 +69,7 @@ const WorkspaceDetail = () => {
                     <p className="text-xs text-gray-500 mt-1">{workspace.member_count} members</p>
                 </div>
 
-                <div className="flex-1 overflow-y-auto">
+                <div className="mb-6">
                     <div className="flex items-center justify-between mb-2">
                         <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Members</h3>
                         <button
@@ -95,6 +96,10 @@ const WorkspaceDetail = () => {
                             </div>
                         ))}
                     </div>
+                </div>
+
+                <div className="border-t border-gray-200 pt-4">
+                    <LabelList workspaceId={id} />
                 </div>
             </div>
 

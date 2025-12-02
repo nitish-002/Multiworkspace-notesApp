@@ -25,7 +25,8 @@ class LabelCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Label
-        fields = ['name', 'color', 'description', 'workspace']
+        fields = ['id', 'name', 'color', 'description', 'workspace']
+        read_only_fields = ['id']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -86,7 +86,18 @@ class AccessSharedNotebookView(generics.RetrieveAPIView):
         # Increment use count
         share_link.increment_use_count()
         
-        return share_link.notebook
+        # Serialize notebook
+        # serializer = self.get_serializer(share_link.notebook)
+        
+        return share_link
+
+    def retrieve(self, request, *args, **kwargs):
+        share_link = self.get_object()
+        serializer = self.get_serializer(share_link.notebook)
+        return Response({
+            "notebook": serializer.data,
+            "access_level": share_link.access_level
+        })
 
 class ShareLinkStatsView(generics.RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -114,3 +125,28 @@ class ShareLinkStatsView(generics.RetrieveAPIView):
             "last_accessed_at": instance.last_accessed_at,
             "recent_accesses": access_data
         })
+
+class EditSharedNotebookView(generics.UpdateAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = NotebookDetailSerializer
+    lookup_field = 'token'
+
+    def get_object(self):
+        token = self.kwargs.get('token')
+        share_link = get_object_or_404(ShareLink, token=token)
+        
+        if not share_link.is_valid():
+            raise exceptions.PermissionDenied("This share link is invalid or expired.")
+            
+        if share_link.access_level != 'EDIT':
+            raise exceptions.PermissionDenied("This link does not have edit permissions.")
+
+        if share_link.password_hash:
+            # For PATCH, password should be in the body
+            password = self.request.data.get('password')
+            if not password:
+                raise exceptions.NotAuthenticated("Password required.")
+            if not share_link.check_password(password):
+                raise exceptions.AuthenticationFailed("Incorrect password.")
+        
+        return share_link.notebook

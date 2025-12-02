@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Save, Cloud, CloudOff } from 'lucide-react';
+import { ChevronLeft, Save, Cloud, CloudOff, Share2 } from 'lucide-react';
 import api from '../api/axios';
 import Button from '../components/ui/Button';
+import NotebookLabels from '../components/labels/NotebookLabels';
+import ShareModal from '../components/sharing/ShareModal';
 
 const NotebookDetail = () => {
     const { id } = useParams();
@@ -15,6 +17,7 @@ const NotebookDetail = () => {
     const [lastSaved, setLastSaved] = useState(null);
     const [error, setError] = useState('');
     const [canEdit, setCanEdit] = useState(false);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
     // Fetch notebook details
     useEffect(() => {
@@ -112,8 +115,11 @@ const NotebookDetail = () => {
                         <span className="text-sm font-medium">Back</span>
                     </button>
                     <div className="h-4 w-px bg-gray-300 mx-2"></div>
-                    <div className="text-sm text-gray-500 truncate max-w-[300px]">
-                        {notebook?.workspace_name || 'Workspace'} / <span className="text-gray-900 font-medium">{title || 'Untitled'}</span>
+                    <div className="flex flex-col">
+                        <div className="text-sm text-gray-500 truncate max-w-[300px]">
+                            {notebook?.workspace_name || 'Workspace'} / <span className="text-gray-900 font-medium">{title || 'Untitled'}</span>
+                        </div>
+                        {notebook && <NotebookLabels notebookId={notebook.id} workspaceId={notebook.workspace} />}
                     </div>
                 </div>
 
@@ -136,6 +142,16 @@ const NotebookDetail = () => {
                             </span>
                         )}
                     </div>
+
+                    <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => setIsShareModalOpen(true)}
+                        className="flex items-center gap-2"
+                    >
+                        <Share2 className="w-4 h-4" />
+                        Share
+                    </Button>
 
                     <Button
                         size="sm"
@@ -169,6 +185,12 @@ const NotebookDetail = () => {
                     readOnly={!canEdit}
                 />
             </main>
+
+            <ShareModal
+                isOpen={isShareModalOpen}
+                onClose={() => setIsShareModalOpen(false)}
+                notebookId={id}
+            />
         </div>
     );
 };
