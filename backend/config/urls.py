@@ -13,6 +13,7 @@ urlpatterns = [
     path('api/notebooks/', include('apps.notebooks.urls')),
     path('api/labels/', include('apps.labels.urls')),
     path('api/search/', include('apps.search.urls')),
+    path('api/share/', include('apps.sharing.urls')),
 ]
 
 # Serve static and media files in development

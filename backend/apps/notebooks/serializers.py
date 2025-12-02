@@ -42,7 +42,8 @@ class NotebookCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Notebook
-        fields = ['title', 'content', 'workspace_id']
+        fields = ['id', 'title', 'content', 'workspace_id']
+        read_only_fields = ['id']
 
     def validate_workspace_id(self, value):
         user = self.context['request'].user

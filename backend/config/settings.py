@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'apps.notebooks',
     'apps.labels',
     'apps.search',
+    'apps.sharing',
 ]
 
 MIDDLEWARE = [

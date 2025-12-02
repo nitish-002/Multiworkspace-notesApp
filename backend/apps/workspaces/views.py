@@ -26,6 +26,14 @@ class WorkspaceListCreateView(generics.ListCreateAPIView):
             return WorkspaceCreateSerializer
         return WorkspaceListSerializer
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        response_serializer = WorkspaceListSerializer(serializer.instance, context=self.get_serializer_context())
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
 class WorkspaceDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Workspace.objects.prefetch_related('members__user')
     

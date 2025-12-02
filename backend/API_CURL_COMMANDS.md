@@ -637,3 +637,95 @@ curl -X GET "http://127.0.0.1:8000/api/search/notebooks/?q=project&workspace_id=
 curl -X GET "http://127.0.0.1:8000/api/search/workspaces/?q=team" ^
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
 ```
+
+---
+
+# Sharing API
+
+## 36. Create Share Link
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/share/create/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"notebook\": 1, \"access_level\": \"READ\", \"expires_in_days\": 7}"
+```
+
+**Expected Response:**
+```json
+{
+    "id": 1,
+    "notebook": {
+        "id": 1,
+        "title": "Shared Notebook",
+        ...
+    },
+    "token": "uuid-token-here",
+    "access_level": "READ",
+    "expires_at": "2025-12-10T10:30:00Z",
+    "share_url": "http://localhost:3000/shared/uuid-token-here",
+    ...
+}
+```
+
+---
+
+## 37. List Share Links
+
+```bash
+curl -X GET http://127.0.0.1:8000/api/share/?notebook_id=1 ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+---
+
+## 38. Get Share Link Detail
+
+```bash
+curl -X GET http://127.0.0.1:8000/api/share/1/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+---
+
+## 39. Update Share Link
+
+```bash
+curl -X PATCH http://127.0.0.1:8000/api/share/1/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"is_active\": false}"
+```
+
+---
+
+## 40. Revoke Share Link (Delete)
+
+```bash
+curl -X DELETE http://127.0.0.1:8000/api/share/1/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+---
+
+## 41. Access Shared Notebook
+
+```bash
+curl -X GET http://127.0.0.1:8000/api/share/access/YOUR_SHARE_TOKEN_HERE/
+```
+
+**With Password:**
+```bash
+curl -X GET http://127.0.0.1:8000/api/share/access/YOUR_SHARE_TOKEN_HERE/ ^
+  -H "Content-Type: application/json" ^
+  -d "{\"password\": \"secret123\"}"
+```
+
+---
+
+## 42. Get Share Link Stats
+
+```bash
+curl -X GET http://127.0.0.1:8000/api/share/1/stats/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
