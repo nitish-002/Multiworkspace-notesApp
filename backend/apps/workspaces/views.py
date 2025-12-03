@@ -102,6 +102,21 @@ class UpdateMemberRoleView(views.APIView):
 
         member.role = role
         member.save()
+        
+        # Log activity
+        from apps.activity.models import ActivityLog
+        from apps.activity.services import ActivityService
+        
+        ActivityService.log_activity(
+            workspace=workspace,
+            actor=request.user,
+            action_type=ActivityLog.MEMBER_ROLE_CHANGED,
+            target_type='WorkspaceMember',
+            target_id=member.user.id,
+            target_title=member.user.email,
+            metadata={'new_role': role}
+        )
+        
         return Response({"detail": "Member role updated."})
 
 class RemoveMemberView(views.APIView):
@@ -117,4 +132,18 @@ class RemoveMemberView(views.APIView):
              return Response({"detail": "Cannot remove the owner."}, status=status.HTTP_403_FORBIDDEN)
 
         member.delete()
+        
+        # Log activity
+        from apps.activity.models import ActivityLog
+        from apps.activity.services import ActivityService
+        
+        ActivityService.log_activity(
+            workspace=workspace,
+            actor=request.user,
+            action_type=ActivityLog.MEMBER_REMOVED,
+            target_type='WorkspaceMember',
+            target_id=member.user.id,
+            target_title=member.user.email
+        )
+        
         return Response(status=status.HTTP_204_NO_CONTENT)

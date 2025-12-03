@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'apps.labels',
     'apps.search',
     'apps.sharing',
+    'apps.activity.apps.ActivityConfig',
 ]
 
 MIDDLEWARE = [

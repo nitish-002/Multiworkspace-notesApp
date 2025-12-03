@@ -58,6 +58,11 @@ class WorkspaceCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = self.context['request'].user
         workspace = Workspace.objects.create(owner=user, **validated_data)
+        
+        # Log activity
+        from apps.activity.services import ActivityService
+        ActivityService.log_workspace_created(workspace, user)
+        
         return workspace
 
 class AddMemberSerializer(serializers.Serializer):

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, UserPlus, Settings, FileText, MoreVertical } from 'lucide-react';
+import { Plus, UserPlus, Settings, FileText, MoreVertical, Activity } from 'lucide-react';
 import api from '../api/axios';
+import { activityApi } from '../api/activity';
 import Button from '../components/ui/Button';
 import CreateNotebookModal from '../components/workspaces/CreateNotebookModal';
 import InviteMemberModal from '../components/workspaces/InviteMemberModal';
 import LabelList from '../components/labels/LabelList';
+import ActivityFeed from '../components/activity/ActivityFeed';
 
 const WorkspaceDetail = () => {
     const { id } = useParams();
@@ -16,6 +18,7 @@ const WorkspaceDetail = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isNotebookModalOpen, setIsNotebookModalOpen] = useState(false);
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState('notebooks'); // 'notebooks' or 'activity'
 
     useEffect(() => {
         fetchData();
@@ -103,57 +106,91 @@ const WorkspaceDetail = () => {
                 </div>
             </div>
 
-            {/* Main Content / Notebooks */}
+            {/* Main Content */}
             <div className="flex-1 p-8 overflow-y-auto">
-                <div className="flex items-center justify-between mb-8">
-                    <h1 className="text-2xl font-bold text-gray-900">Notebooks</h1>
-                    <Button onClick={() => setIsNotebookModalOpen(true)} className="flex items-center gap-2">
-                        <Plus className="w-4 h-4" />
-                        New Notebook
-                    </Button>
+                {/* Tabs */}
+                <div className="flex items-center space-x-4 mb-8 border-b border-gray-200">
+                    <button
+                        onClick={() => setActiveTab('notebooks')}
+                        className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${activeTab === 'notebooks'
+                                ? 'border-indigo-600 text-indigo-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            }`}
+                    >
+                        Notebooks
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('activity')}
+                        className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${activeTab === 'activity'
+                                ? 'border-indigo-600 text-indigo-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            }`}
+                    >
+                        Activity
+                    </button>
                 </div>
 
-                {notebooks.length === 0 ? (
-                    <div className="text-center py-16 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-                        <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900">No notebooks yet</h3>
-                        <p className="mt-1 text-sm text-gray-500 mb-6">
-                            Create your first notebook to start documenting.
-                        </p>
-                        <Button variant="secondary" onClick={() => setIsNotebookModalOpen(true)}>
-                            Create Notebook
-                        </Button>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {notebooks.map(notebook => (
-                            <div
-                                key={notebook.id}
-                                onClick={() => navigate(`/notebook/${notebook.id}`)}
-                                className="group p-6 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all duration-200 hover:border-gray-300 cursor-pointer"
-                            >
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
-                                        <FileText className="w-5 h-5" />
-                                    </div>
-                                    <button className="text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <MoreVertical className="w-4 h-4" />
-                                    </button>
-                                </div>
+                {activeTab === 'notebooks' ? (
+                    <>
+                        <div className="flex items-center justify-between mb-8">
+                            <h1 className="text-2xl font-bold text-gray-900">Notebooks</h1>
+                            <Button onClick={() => setIsNotebookModalOpen(true)} className="flex items-center gap-2">
+                                <Plus className="w-4 h-4" />
+                                New Notebook
+                            </Button>
+                        </div>
 
-                                <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
-                                    {notebook.title}
-                                </h3>
-
-                                <p className="text-sm text-gray-500 line-clamp-3 mb-4">
-                                    {(notebook.content || '').substring(0, 100)}...
+                        {notebooks.length === 0 ? (
+                            <div className="text-center py-16 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                                <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                                <h3 className="text-lg font-medium text-gray-900">No notebooks yet</h3>
+                                <p className="mt-1 text-sm text-gray-500 mb-6">
+                                    Create your first notebook to start documenting.
                                 </p>
-
-                                <div className="text-xs text-gray-400">
-                                    Updated {new Date(notebook.updated_at).toLocaleDateString()}
-                                </div>
+                                <Button variant="secondary" onClick={() => setIsNotebookModalOpen(true)}>
+                                    Create Notebook
+                                </Button>
                             </div>
-                        ))}
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {notebooks.map(notebook => (
+                                    <div
+                                        key={notebook.id}
+                                        onClick={() => navigate(`/notebook/${notebook.id}`)}
+                                        className="group p-6 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all duration-200 hover:border-gray-300 cursor-pointer"
+                                    >
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
+                                                <FileText className="w-5 h-5" />
+                                            </div>
+                                            <button className="text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <MoreVertical className="w-4 h-4" />
+                                            </button>
+                                        </div>
+
+                                        <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
+                                            {notebook.title}
+                                        </h3>
+
+                                        <p className="text-sm text-gray-500 line-clamp-3 mb-4">
+                                            {(notebook.content || '').substring(0, 100)}...
+                                        </p>
+
+                                        <div className="text-xs text-gray-400">
+                                            Updated {new Date(notebook.updated_at).toLocaleDateString()}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </>
+                ) : (
+                    <div className="max-w-3xl">
+                        <ActivityFeed
+                            fetchActivity={activityApi.getWorkspaceActivity}
+                            resourceId={id}
+                            title="Workspace Activity"
+                        />
                     </div>
                 )}
             </div>

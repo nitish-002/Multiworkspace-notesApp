@@ -729,3 +729,69 @@ curl -X GET http://127.0.0.1:8000/api/share/access/YOUR_SHARE_TOKEN_HERE/ ^
 curl -X GET http://127.0.0.1:8000/api/share/1/stats/ ^
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
 ```
+
+---
+
+# Activity API
+
+## 43. Get Workspace Activity
+
+```bash
+curl -X GET http://127.0.0.1:8000/api/activity/workspaces/1/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+**Filter by Action Type:**
+```bash
+curl -X GET "http://127.0.0.1:8000/api/activity/workspaces/1/?action_type=Created%20notebook" ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+**Filter by Days:**
+```bash
+curl -X GET "http://127.0.0.1:8000/api/activity/workspaces/1/?days=7" ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+**Expected Response:**
+```json
+[
+    {
+        "id": 1,
+        "actor": {
+            "id": 1,
+            "username": "johndoe",
+            "email": "john@example.com",
+            ...
+        },
+        "action_type": "Created notebook",
+        "action_display": "John Doe created notebook 'Project Ideas'",
+        "target_type": "Notebook",
+        "target_id": 1,
+        "target_title": "Project Ideas",
+        "metadata": {},
+        "created_at": "2025-12-04T10:30:00Z",
+        "relative_time": "2 minutes ago"
+    }
+]
+```
+
+---
+
+## 44. Get User Activity
+
+Get activity for the authenticated user across all workspaces.
+
+```bash
+curl -X GET http://127.0.0.1:8000/api/activity/my-activity/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+---
+
+## 45. Get Notebook Activity
+
+```bash
+curl -X GET http://127.0.0.1:8000/api/activity/notebooks/1/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
