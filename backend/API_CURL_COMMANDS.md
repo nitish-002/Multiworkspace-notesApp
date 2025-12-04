@@ -795,3 +795,111 @@ curl -X GET http://127.0.0.1:8000/api/activity/my-activity/ ^
 curl -X GET http://127.0.0.1:8000/api/activity/notebooks/1/ ^
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
 ```
+
+---
+
+# Sync API
+
+## 46. Start Editing Session
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/sync/notebooks/1/edit/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+**Expected Response:**
+```json
+{
+    "notebook_id": 1,
+    "session_token": "uuid-token-here",
+    "base_version": 5,
+    "base_content": "Current content...",
+    "current_version": 5
+}
+```
+
+---
+
+## 47. Apply Patch
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/sync/notebooks/1/apply-patch/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"session_token\": \"uuid-token-here\", \"patch\": \"@@ -1,5 +1,5 @@\\n-old\\n+new\\n\"}"
+```
+
+**Expected Response (Success):**
+```json
+{
+    "status": "success",
+    "version": 6,
+    "content": "New content..."
+}
+```
+
+**Expected Response (Auto-Merged):**
+```json
+{
+    "status": "auto_merged",
+    "version": 7,
+    "content": "Merged content...",
+    "message": "Changes merged automatically"
+}
+```
+
+**Expected Response (Conflict):**
+```json
+{
+    "status": "conflict",
+    "conflict_id": 1,
+    "conflicts": [
+        {
+            "line_number": 5,
+            "base": "Base line",
+            "yours": "Your line",
+            "theirs": "Their line"
+        }
+    ],
+    "full_versions": { ... }
+}
+```
+
+---
+
+## 48. List Conflicts
+
+```bash
+curl -X GET http://127.0.0.1:8000/api/sync/conflicts/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+---
+
+## 49. Get Conflict Detail
+
+```bash
+curl -X GET http://127.0.0.1:8000/api/sync/conflicts/1/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+```
+
+---
+
+## 50. Resolve Conflict
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/sync/conflicts/1/resolve/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"resolution_strategy\": \"YOURS\"}"
+```
+
+**Strategies:** `YOURS`, `THEIRS`, `MANUAL`
+
+**Manual Resolution:**
+```bash
+curl -X POST http://127.0.0.1:8000/api/sync/conflicts/1/resolve/ ^
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"resolution_strategy\": \"MANUAL\", \"final_content\": \"Merged content manually\"}"
+```

@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Save, Cloud, CloudOff, Share2 } from 'lucide-react';
+import { ChevronLeft, Save, Cloud, CloudOff, Share2, AlertTriangle, Bell, Clock } from 'lucide-react';
 import api from '../api/axios';
 import Button from '../components/ui/Button';
 import NotebookLabels from '../components/labels/NotebookLabels';
 import ShareModal from '../components/sharing/ShareModal';
+import SyncManager from '../services/SyncManager';
+import ConflictResolver from '../components/sync/ConflictResolver';
+import ConflictListModal from '../components/sync/ConflictListModal';
 
 const NotebookDetail = () => {
     const { id } = useParams();
@@ -19,10 +22,30 @@ const NotebookDetail = () => {
     const [canEdit, setCanEdit] = useState(false);
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
-    // Fetch notebook details
+    // Sync State
+    const syncManagerRef = useRef(null);
+    const [syncStatus, setSyncStatus] = useState('idle'); // idle, syncing, error, conflict, conflict_pending
+    const [conflict, setConflict] = useState(null);
+    const [canResolveConflict, setCanResolveConflict] = useState(false);
+    const [isConflictModalOpen, setIsConflictModalOpen] = useState(false);
+
+    // Centralized Conflict Management
+    const [pendingConflictCount, setPendingConflictCount] = useState(0);
+    const [isConflictListOpen, setIsConflictListOpen] = useState(false);
+
+    // Initialize SyncManager
     useEffect(() => {
-        const fetchNotebook = async () => {
+        syncManagerRef.current = new SyncManager(id);
+        return () => {
+            syncManagerRef.current = null;
+        };
+    }, [id]);
+
+    // Fetch notebook details and start session
+    useEffect(() => {
+        const fetchNotebookAndStartSession = async () => {
             try {
+                // 1. Fetch Notebook
                 const response = await api.get(`/api/notebooks/${id}/`);
                 const data = response.data;
                 setNotebook(data);
@@ -30,60 +53,172 @@ const NotebookDetail = () => {
                 setContent(data.content);
                 setLastSaved(new Date(data.updated_at));
 
-                // Determine if user can edit (Owner/Editor)
-                // This logic might need adjustment based on how the API returns permissions
-                // For now, we assume if the request succeeded, we have access. 
-                // We should ideally check the user's role in the workspace.
-                // A simple check: if the API allows PUT, we can edit.
-                setCanEdit(true);
+                // Determine permissions
+                // Temporary: Check if current user is the owner of the workspace
+                const profileRes = await api.get('/api/auth/profile/');
+                const currentUser = profileRes.data;
+
+                // Fetch workspace details to check role
+                const workspaceRes = await api.get(`/api/workspaces/${data.workspace}/`);
+                const workspace = workspaceRes.data;
+
+                const member = workspace.members.find(m => m.user.id === currentUser.id);
+                const role = member ? member.role : null;
+
+                const hasEditPermission = role === 'OWNER' || role === 'ADMIN' || role === 'EDITOR';
+                const hasResolvePermission = role === 'OWNER' || role === 'ADMIN';
+
+                setCanEdit(hasEditPermission);
+                setCanResolveConflict(hasResolvePermission);
+
+                // 2. Start Sync Session if editable
+                if (hasEditPermission) {
+                    await syncManagerRef.current.startSession();
+                }
+
             } catch (err) {
-                console.error('Failed to fetch notebook:', err);
+                console.error('Failed to load notebook:', err);
                 setError('Failed to load notebook.');
             } finally {
                 setIsLoading(false);
             }
         };
 
-        fetchNotebook();
+        fetchNotebookAndStartSession();
     }, [id]);
 
-    // Shared save function
-    const saveNotebook = async () => {
+    // Sync Function
+    const performSync = useCallback(async (currentContent) => {
+        if (!syncManagerRef.current || !canEdit) return;
+
+        setSyncStatus('syncing');
         setIsSaving(true);
+        setError('');
+
         try {
-            const response = await api.patch(`/api/notebooks/${id}/`, {
-                title,
-                content
-            });
-            setNotebook(response.data);
-            setLastSaved(new Date(response.data.updated_at));
-            setError('');
+            const result = await syncManagerRef.current.sync(currentContent);
+
+            if (result) {
+                if (result.status === 'success') {
+                    setLastSaved(new Date());
+                    setSyncStatus('idle');
+                } else if (result.status === 'auto_merged') {
+                    setContent(result.content); // Update editor with merged content
+                    setLastSaved(new Date());
+                    setSyncStatus('idle');
+                } else if (result.status === 'conflict') {
+                    // This should theoretically not happen for Editors anymore (queued)
+                    // But might happen for Owners if auto-merge fails completely
+                    setSyncStatus('conflict');
+                    setConflict(result);
+                    setIsConflictModalOpen(true);
+                } else if (result.status === 'conflict_pending') {
+                    setSyncStatus('conflict_pending');
+                } else if (result.status === 'no_changes') {
+                    setSyncStatus('idle');
+                }
+            } else {
+                setSyncStatus('idle');
+            }
         } catch (err) {
-            console.error('Failed to save notebook:', err);
-            setError('Failed to save changes.');
+            console.error('Sync error:', err);
+            setSyncStatus('error');
+            setError('Failed to sync changes.');
         } finally {
             setIsSaving(false);
         }
-    };
+    }, [canEdit]);
 
-    // Manual save handler
-    const handleManualSave = async () => {
-        if (isSaving) return;
-        await saveNotebook();
-    };
-
-    // Auto-save logic
+    // Auto-save / Auto-sync logic (Polling included)
     useEffect(() => {
-        if (!notebook || !canEdit) return;
+        if (!notebook || !canEdit || syncStatus === 'conflict') return;
 
+        // Debounced save for user edits
         const timeoutId = setTimeout(() => {
-            if (title !== notebook.title || content !== notebook.content) {
-                saveNotebook();
+            if (content !== syncManagerRef.current.baseContent) {
+                performSync(content);
+            }
+            if (title !== notebook.title) {
+                // Save title via standard API
+                api.patch(`/api/notebooks/${id}/`, { title })
+                    .then(res => setNotebook(prev => ({ ...prev, title: res.data.title })))
+                    .catch(err => console.error("Title save failed", err));
             }
         }, 1000);
 
-        return () => clearTimeout(timeoutId);
-    }, [title, content, id, notebook, canEdit]);
+        // Polling for updates from other users (every 3 seconds)
+        const intervalId = setInterval(async () => {
+            // Only poll if we are not currently syncing/saving and no conflict
+            if (syncStatus === 'idle' && !isSaving && syncManagerRef.current) {
+                // Check if checkVersion exists (handles stale HMR instances)
+                if (typeof syncManagerRef.current.checkVersion === 'function') {
+                    try {
+                        const res = await api.get(`/api/sync/notebooks/${id}/check-version/`);
+                        const { version, pending_conflicts } = res.data;
+
+                        setPendingConflictCount(pending_conflicts || 0);
+
+                        // If server version is greater than our base version, pull changes
+                        if (version && version > syncManagerRef.current.baseVersion) {
+                            console.log('New version detected, pulling changes...');
+                            performSync(content);
+                        }
+                    } catch (e) {
+                        console.error("Polling failed", e);
+                    }
+                }
+            }
+        }, 3000);
+
+        return () => {
+            clearTimeout(timeoutId);
+            clearInterval(intervalId);
+        };
+    }, [content, title, id, notebook, canEdit, performSync, syncStatus, isSaving]);
+
+    const handleResolveConflict = async (strategy, finalContent) => {
+        if (!conflict) return;
+
+        try {
+            const result = await syncManagerRef.current.resolveConflict(conflict.conflict_id || conflict.id, strategy, finalContent);
+            if (result && result.status === 'resolved') {
+                setConflict(null);
+                setSyncStatus('idle');
+                setIsConflictModalOpen(false);
+
+                // Refresh content
+                const response = await api.get(`/api/notebooks/${id}/`);
+                setContent(response.data.content);
+                await syncManagerRef.current.startSession();
+
+                // Also refresh conflict list if open
+                if (isConflictListOpen) {
+                    setIsConflictListOpen(false);
+                }
+            }
+        } catch (err) {
+            console.error('Resolution failed:', err);
+            alert('Failed to resolve conflict.');
+        }
+    };
+
+    const handleSelectConflict = async (selectedConflict) => {
+        // Fetch full conflict details including content
+        try {
+            const response = await api.get(`/api/sync/conflicts/${selectedConflict.id}/`);
+            const fullConflict = response.data;
+
+            // Transform to format expected by ConflictResolver
+            setConflict({
+                ...fullConflict,
+                conflict_id: fullConflict.id
+            });
+            setIsConflictListOpen(false);
+            setIsConflictModalOpen(true);
+        } catch (err) {
+            console.error("Failed to load conflict details", err);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -125,10 +260,23 @@ const NotebookDetail = () => {
 
                 <div className="flex items-center gap-4">
                     <div className="text-xs text-gray-400 hidden sm:block">
-                        {isSaving ? (
+                        {syncStatus === 'syncing' || isSaving ? (
                             <span className="flex items-center gap-1 text-gray-500">
                                 <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-500"></div>
                                 Saving...
+                            </span>
+                        ) : syncStatus === 'conflict' ? (
+                            <span
+                                className="flex items-center gap-1 text-red-600 font-medium cursor-pointer hover:underline"
+                                onClick={() => setIsConflictModalOpen(true)}
+                            >
+                                <AlertTriangle className="w-4 h-4" />
+                                Conflict Detected
+                            </span>
+                        ) : syncStatus === 'conflict_pending' ? (
+                            <span className="flex items-center gap-1 text-orange-600 font-medium">
+                                <Clock className="w-4 h-4" />
+                                Changes Queued
                             </span>
                         ) : error ? (
                             <span className="flex items-center gap-1 text-red-500">
@@ -143,6 +291,23 @@ const NotebookDetail = () => {
                         )}
                     </div>
 
+                    {canResolveConflict && (
+                        <Button
+                            size="sm"
+                            variant={pendingConflictCount > 0 ? "primary" : "secondary"}
+                            onClick={() => setIsConflictListOpen(true)}
+                            className="flex items-center gap-2 relative"
+                        >
+                            <Bell className="w-4 h-4" />
+                            Conflicts
+                            {pendingConflictCount > 0 && (
+                                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                                    {pendingConflictCount}
+                                </span>
+                            )}
+                        </Button>
+                    )}
+
                     <Button
                         size="sm"
                         variant="secondary"
@@ -156,8 +321,8 @@ const NotebookDetail = () => {
                     <Button
                         size="sm"
                         variant="primary"
-                        onClick={handleManualSave}
-                        disabled={isSaving || !canEdit}
+                        onClick={() => performSync(content)}
+                        disabled={isSaving || !canEdit || syncStatus === 'conflict'}
                         className="flex items-center gap-2"
                     >
                         <Save className="w-4 h-4" />
@@ -191,6 +356,22 @@ const NotebookDetail = () => {
                 onClose={() => setIsShareModalOpen(false)}
                 notebookId={id}
             />
+
+            <ConflictListModal
+                notebookId={id}
+                isOpen={isConflictListOpen}
+                onClose={() => setIsConflictListOpen(false)}
+                onSelectConflict={handleSelectConflict}
+            />
+
+            {conflict && isConflictModalOpen && (
+                <ConflictResolver
+                    conflict={conflict}
+                    onResolve={handleResolveConflict}
+                    onCancel={() => setIsConflictModalOpen(false)}
+                    canResolve={canResolveConflict}
+                />
+            )}
         </div>
     );
 };
