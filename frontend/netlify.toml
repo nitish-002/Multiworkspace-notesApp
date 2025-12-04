@@ -1,0 +1,32 @@
+[build]
+  # Directory that contains the deploy-ready HTML files and assets
+  publish = "dist"
+  
+  # Build command
+  command = "npm install && npm run build"
+
+[build.environment]
+  # Node version
+  NODE_VERSION = "20"
+
+# Redirect rules for SPA (Single Page Application)
+# This ensures all routes are handled by index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Headers for security and CORS
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+

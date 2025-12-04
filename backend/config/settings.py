@@ -6,6 +6,7 @@ from datetime import timedelta
 from decouple import config
 import dj_database_url
 import os
+from django.core.management.utils import get_random_secret_key
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -15,7 +16,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY')
+SECRET_KEY = config('SECRET_KEY', default=get_random_secret_key())
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
@@ -86,12 +87,25 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=config('DATABASE_URL', default=f"postgres://{config('DB_USER', default='postgres')}:{config('DB_PASSWORD', default='postgres')}@{config('DB_HOST', default='localhost')}:{config('DB_PORT', default='5432')}/{config('DB_NAME', default='ojt_db')}"),
-        conn_max_age=600
-    )
-}
+# Use DATABASE_URL if available (Render provides this automatically when database is linked)
+# Otherwise, use SQLite for local development
+database_url = config('DATABASE_URL', default=None)
+if database_url:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=database_url,
+            conn_max_age=600
+        )
+    }
+else:
+    # Fallback: Use SQLite for local development
+    # To use PostgreSQL locally, set DATABASE_URL in .env file
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -169,18 +183,28 @@ SIMPLE_JWT = {
 
 
 # CORS Configuration
-CORS_ALLOWED_ORIGINS = config(
+def normalize_origin(origin):
+    """Ensure origin has a scheme (http:// or https://)"""
+    origin = origin.strip()
+    if not origin.startswith(('http://', 'https://')):
+        # Default to https:// for production domains
+        origin = f'https://{origin}'
+    return origin
+
+cors_origins_raw = config(
     'CORS_ALLOWED_ORIGINS',
     default='http://localhost:3000'
-).split(',')
+)
+CORS_ALLOWED_ORIGINS = [normalize_origin(origin) for origin in cors_origins_raw.split(',')]
 
-CORS_ALLOWED_ORIGINS.append('http://localhost:5173')
+# Add localhost:5173 for development (only if not already present)
+if 'http://localhost:5173' not in CORS_ALLOWED_ORIGINS:
+    CORS_ALLOWED_ORIGINS.append('http://localhost:5173')
 
 CORS_ALLOW_CREDENTIALS = True
 
 # CSRF Configuration for Deployment
-CSRF_TRUSTED_ORIGINS = config(
-    'CORS_ALLOWED_ORIGINS',
-    default='http://localhost:3000'
-).split(',')
-CSRF_TRUSTED_ORIGINS.append('http://localhost:5173')
+# Use the same origins as CORS, ensuring they have schemes
+CSRF_TRUSTED_ORIGINS = [normalize_origin(origin) for origin in cors_origins_raw.split(',')]
+if 'http://localhost:5173' not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append('http://localhost:5173')
