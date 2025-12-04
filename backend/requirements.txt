@@ -6,3 +6,6 @@ python-decouple==3.8
 setuptools
 diff-match-patch==20230430
 psycopg[binary]
+gunicorn==21.2.0
+dj-database-url==2.1.0
+whitenoise==6.6.0
