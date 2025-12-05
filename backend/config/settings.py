@@ -23,6 +23,11 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
+# Automatically add Render's external hostname
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
 
 # Application definition
 
@@ -201,10 +206,12 @@ CORS_ALLOWED_ORIGINS = [normalize_origin(origin) for origin in cors_origins_raw.
 if 'http://localhost:5173' not in CORS_ALLOWED_ORIGINS:
     CORS_ALLOWED_ORIGINS.append('http://localhost:5173')
 
+# Add production frontend (Netlify)
+if 'https://multiworkspace-notes.netlify.app' not in CORS_ALLOWED_ORIGINS:
+    CORS_ALLOWED_ORIGINS.append('https://multiworkspace-notes.netlify.app')
+
 CORS_ALLOW_CREDENTIALS = True
 
 # CSRF Configuration for Deployment
-# Use the same origins as CORS, ensuring they have schemes
-CSRF_TRUSTED_ORIGINS = [normalize_origin(origin) for origin in cors_origins_raw.split(',')]
-if 'http://localhost:5173' not in CSRF_TRUSTED_ORIGINS:
-    CSRF_TRUSTED_ORIGINS.append('http://localhost:5173')
+# Trust the same origins as CORS
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS.copy()

@@ -13,11 +13,11 @@ This document lists all environment variables needed for deploying your Django a
 - **Example**: `django-insecure-abc123xyz789...` (50+ characters)
 - **Security**: **NEVER** commit this to version control. Keep it secret!
 
-### 2. **ALLOWED_HOSTS** ⚠️ REQUIRED
+### 2. **ALLOWED_HOSTS** ⚠️ REQUIRED (Auto-detected on Render)
 - **Description**: Comma-separated list of host/domain names that this Django site can serve
 - **Format**: Comma-separated values (no spaces)
 - **Example**: `your-app.onrender.com,www.yourdomain.com,yourdomain.com`
-- **For Render**: Use your Render service URL (e.g., `your-app.onrender.com`)
+- **For Render**: We have added auto-detection for `RENDER_EXTERNAL_HOSTNAME`, so this is technically optional for the default Render URL, but required for custom domains.
 
 ### 3. **CORS_ALLOWED_ORIGINS** ⚠️ REQUIRED
 - **Description**: Comma-separated list of origins that are allowed to make cross-origin requests
