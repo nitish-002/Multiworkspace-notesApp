@@ -42,9 +42,16 @@ In browser console, you should see something like:
 ### Step 2: Verify Environment Variables in Render
 Make sure these are set:
 - `ALLOWED_HOSTS=multiworkspace-notesapp.onrender.com`
-- `CORS_ALLOWED_ORIGINS=https://your-netlify-site.netlify.app`
+- `CORS_ALLOWED_ORIGINS=https://multiworkspace-notes.netlify.app`
 - `SECRET_KEY=your-secret-key`
 - `DATABASE_URL=your-database-url`
+
+### Step 2.5: Verify Settings.py (Already Fixed via Code)
+Ensure `settings.py` has:
+```python
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+```
+This is required because Render terminates SSL, and without this, Django treats requests as HTTP, leading to 400 errors for secure checks.
 
 ### Step 3: Test the API Directly
 Use curl or Postman to test:

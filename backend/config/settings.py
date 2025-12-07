@@ -28,6 +28,14 @@ RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
+# Explicitly add the known backend domain to prevent DisallowedHost errors
+if 'multiworkspace-notesapp.onrender.com' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('multiworkspace-notesapp.onrender.com')
+
+# Render terminates SSL, so we need to tell Django to trust the X-Forwarded-Proto header
+# This is crucial for CSRF verification and secure cookie handling
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 
 # Application definition
 
